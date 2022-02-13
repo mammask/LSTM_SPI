@@ -34,10 +34,12 @@ modelObject.ComputeDrought()
 modelObject.PreprocessData(config)
 
 # Fit LSTM Model
-modelObject.FitLSTM(ncells = 2, densnodes = 40, noptimizer = Adam, nepochs = 100, nbatchsize = 2, nlr = 0.001)
+modelObject.FitLSTM(ncells = 2, densnodes = 10,\
+    noptimizer = Adam, nepochs = 100, nbatchsize = 2, nlr = 0.001)
 
 # Evaluate LSTM on Test data
 overall = modelObject.EvaluateLSTM()
 
 # Generate Reporting
 modelObject.MeasurePerformance()
+modelObject.performance_test[['Actual', 'Predicted']].plot()

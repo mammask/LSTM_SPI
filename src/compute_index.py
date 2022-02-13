@@ -1,5 +1,6 @@
 # Load python libraries
 import pandas as pd
+import numpy as np
 import datetime as dt
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
@@ -24,7 +25,10 @@ def compute_drought(df, stationary, spiscale):
         getvalues = []
         for j in df.rx2(i):
             getvalues.append(j)
-        dfP[dfcolnames[i-1]] = getvalues
+        if dfcolnames[i-1] == 'Trend' or dfcolnames[i-1] == 'ecdfm':
+            dfP[dfcolnames[i-1]] = np.where(getvalues == "NA_integer_", None, getvalues)
+        else:
+            dfP[dfcolnames[i-1]] = getvalues
 
 
     # Recover date
