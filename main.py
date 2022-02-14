@@ -9,7 +9,7 @@ import datetime as dt
 import numpy as np
 from math import sqrt
 import configparser
-from keras.optimizers import Adam
+from keras.optimizers import Adam, RMSprop
 
 # Custom functions
 from src.model import LSTM_Modeller
@@ -34,12 +34,13 @@ modelObject.ComputeDrought()
 modelObject.PreprocessData(config)
 
 # Fit LSTM Model
-modelObject.FitLSTM(ncells = 2, densnodes = 10,\
-    noptimizer = Adam, nepochs = 100, nbatchsize = 2, nlr = 0.001)
+modelObject.FitLSTM(ncells = 6, densnodes = 20,\
+    noptimizer = Adam, nepochs = 150, nbatchsize = 2, \
+        nlr = 0.0005)
 
 # Evaluate LSTM on Test data
 overall = modelObject.EvaluateLSTM()
 
 # Generate Reporting
 modelObject.MeasurePerformance()
-modelObject.performance_test[['Actual', 'Predicted']].plot()
+# modelObject.performance_test[['Actual', 'Predicted']].plot()

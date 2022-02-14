@@ -11,9 +11,15 @@ import rpy2
 from rpy2.robjects import r, pandas2ri
 pandas2ri.activate()
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.rc('axes', labelsize=14)
+mpl.rc('xtick', labelsize=12)
+mpl.rc('ytick', labelsize=12)
+
 from keras.models import Sequential
-from keras.layers import Dense, LSTM
+from keras.layers import Dense, LSTM, Dropout
 from sklearn.metrics import mean_squared_error, r2_score
+from tensorflow.keras.callbacks import ModelCheckpoint
 
 # Load R package
 droughtr = importr('droughtR')
@@ -107,16 +113,40 @@ class LSTM_Modeller:
         self.train_x = np.reshape(self.train_x, (self.train_x.shape[0], self.time_steps, self.train_x.shape[1]))
         self.valid_x = np.reshape(self.valid_x, (self.valid_x.shape[0], self.time_steps, self.valid_x.shape[1]))
 
-    
+    def plot_learning_curves(self, loss, val_loss):
+
+        plt.plot(np.arange(len(loss)), loss, "b.-", label="Training loss")
+        plt.plot(np.arange(len(val_loss)), val_loss, "r.-", label="Validation loss")
+        plt.gca().xaxis.set_major_locator(mpl.ticker.MaxNLocator(integer=True))
+        plt.legend(fontsize=14)
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.grid(True)
+
     def FitLSTM(self, ncells, densnodes, noptimizer, nepochs, nbatchsize, nlr):
 
         # Fit the LSTM Model
         self.model = Sequential()
-        self.model.add(LSTM(ncells, input_shape=(1, self.lool_back), activation= 'relu'))
+        self.model.add(LSTM(ncells, input_shape=(1, self.lool_back), activation= 'relu', return_sequences = True))
+        self.model.add(LSTM(ncells, activation= 'relu', return_sequences = False))
         self.model.add(Dense(densnodes, activation= 'tanh'))
+        self.model.add(Dropout(rate = 0.2))
         self.model.add(Dense(1, activation= 'linear'))
+        
+        save_weights_at = self.iteration + '/lstm_drought.hdf5'
+        save_best = ModelCheckpoint(save_weights_at, monitor='val_loss', verbose=1,
+                            save_best_only=True, save_weights_only=False, mode='auto'
+                           )
+
         self.model.compile(loss='mean_squared_error', optimizer=noptimizer(lr=nlr))
-        self.model.fit(self.train_x, self.train_y, epochs=nepochs, batch_size=nbatchsize, verbose=2, validation_data=(self.valid_x, self.valid_y))
+        self.model.fit(self.train_x, self.train_y,\
+            epochs=nepochs, batch_size=nbatchsize,\
+                 verbose=2,callbacks=[save_best],\
+                      validation_data=(self.valid_x, self.valid_y))
+
+        self.plot_learning_curves(self.model.history.history['val_loss'], \
+                             self.model.history.history['loss'])
+        plt.show()
 
     def EvaluateLSTM(self):
 
